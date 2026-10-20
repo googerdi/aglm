@@ -6,8 +6,8 @@ from aglm.config import ModelConfig
 def test_default_config_is_valid():
     config = ModelConfig()
 
-    assert config.vocab_size == 1024
-    assert config.context_length == 64
+    assert config.vocab_size == 4096
+    assert config.context_length == 128
     assert config.d_model == 64
     assert config.num_layers == 2
     assert config.num_heads == 4

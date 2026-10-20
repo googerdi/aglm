@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ModelConfig:
-    vocab_size: int = 1024
-    context_length: int = 64
+    vocab_size: int = 4096
+    context_length: int = 128
     d_model: int = 64
     num_layers: int = 2
     num_heads: int = 4
