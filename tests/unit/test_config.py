@@ -11,7 +11,6 @@ def test_default_config_is_valid():
     assert config.d_model == 64
     assert config.num_layers == 2
     assert config.num_heads == 4
-    assert config.d_model % config.num_heads == 0
 
 
 def test_valid_custom_config():
