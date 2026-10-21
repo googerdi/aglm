@@ -5,6 +5,12 @@ model:
   d_model: 384
   num_layers: 10
   num_heads: 6
+  attention:
+    implementation: gqa
+    pattern: full_causal
+    num_kv_heads: 2
+    sliding_window: null
+    layer_overrides: {}
 
 tokenizer:
   type: byte_level_bpe
@@ -17,3 +23,6 @@ training:
 
 hardware:
   target: cpu_or_laptop
+
+runtime:
+  sdpa_backend: auto

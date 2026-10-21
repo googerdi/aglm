@@ -37,10 +37,14 @@ placeholders. CI and device selection are not implemented.
 
 ## Open decisions
 
-- Record the attention visibility pattern explicitly: causal full attention is
-  the proposed first baseline; sliding-window attention remains a later option.
 - Decide and document the exact Persian normalization policy before training
   the tokenizer, since changing it changes tokenizer behavior and artifacts.
+
+The initial attention decisions are recorded in
+`docs/decisions/0002-model-architecture-and-training.md`: GQA with causal full
+attention and automatic PyTorch SDPA backend selection. The config fields are
+present in the YAML profiles; attention execution and per-layer overrides are
+not implemented yet.
 
 ## Updating progress
 

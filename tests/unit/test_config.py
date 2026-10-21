@@ -2,7 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from aglm.config import AppConfig, ModelConfig, TokenizerConfig, load_config
+from aglm.config import (
+    AppConfig,
+    AttentionConfig,
+    ModelConfig,
+    TokenizerConfig,
+    load_config,
+)
 
 
 def test_default_config_is_valid():
@@ -55,11 +61,19 @@ def test_config_is_immutable() -> None:
 
 
 @pytest.mark.parametrize(
-    ("profile", "vocab_size", "context_length", "d_model", "num_layers", "num_heads"),
+    (
+        "profile",
+        "vocab_size",
+        "context_length",
+        "d_model",
+        "num_layers",
+        "num_heads",
+        "num_kv_heads",
+    ),
     [
-        ("tiny", 8192, 512, 384, 10, 6),
-        ("small", 24576, 2048, 768, 12, 12),
-        ("base", 65536, 8192, 1536, 24, 24),
+        ("tiny", 8192, 512, 384, 10, 6, 2),
+        ("small", 24576, 2048, 768, 12, 12, 4),
+        ("base", 65536, 8192, 1536, 24, 24, 8),
     ],
 )
 def test_yaml_profiles_load_into_structured_config(
@@ -69,6 +83,7 @@ def test_yaml_profiles_load_into_structured_config(
     d_model: int,
     num_layers: int,
     num_heads: int,
+    num_kv_heads: int,
 ) -> None:
     config = load_config(Path(__file__).parents[2] / "configs" / f"{profile}.yaml")
 
@@ -80,8 +95,11 @@ def test_yaml_profiles_load_into_structured_config(
         d_model=d_model,
         num_layers=num_layers,
         num_heads=num_heads,
+        attention=AttentionConfig(num_kv_heads=num_kv_heads),
     )
     assert config.tokenizer.vocab_size == config.model.vocab_size
+    assert config.model.attention.pattern == "full_causal"
+    assert config.runtime.sdpa_backend == "auto"
 
 
 def test_load_config_rejects_missing_sections(tmp_path: Path) -> None:
@@ -111,3 +129,47 @@ def test_tokenizer_identifier_is_an_explicit_registry_key() -> None:
 def test_tokenizer_identifier_must_not_be_empty() -> None:
     with pytest.raises(ValueError, match="type must not be empty"):
         TokenizerConfig(type="")
+
+
+@pytest.mark.parametrize(
+    "attention_kwargs",
+    [
+        {"pattern": "sliding_window"},
+        {"sliding_window": 0},
+        {"layer_overrides": {0: "sliding_window"}},
+    ],
+)
+def test_invalid_attention_window_config_is_rejected(
+    attention_kwargs: dict[str, object],
+) -> None:
+    with pytest.raises(ValueError, match="sliding_window"):
+        AttentionConfig(**attention_kwargs)
+
+
+def test_gqa_head_counts_must_be_compatible() -> None:
+    with pytest.raises(ValueError, match="divisible by num_kv_heads"):
+        ModelConfig(
+            d_model=96,
+            num_heads=6,
+            attention=AttentionConfig(num_kv_heads=4),
+        )
+
+
+def test_attention_layer_override_must_be_in_model() -> None:
+    with pytest.raises(ValueError, match="less than num_layers"):
+        ModelConfig(
+            num_layers=2, attention=AttentionConfig(layer_overrides={2: "full_causal"})
+        )
+
+
+def test_sliding_window_hybrid_config_is_valid() -> None:
+    config = ModelConfig(
+        num_layers=3,
+        attention=AttentionConfig(
+            pattern="sliding_window",
+            sliding_window=256,
+            layer_overrides={2: "full_causal"},
+        ),
+    )
+
+    assert config.attention.layer_overrides[2] == "full_causal"

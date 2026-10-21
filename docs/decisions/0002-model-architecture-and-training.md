@@ -40,12 +40,29 @@ for every scale or hardware target.
 - Use pre-norm residual blocks with RMSNorm and SwiGLU feed-forward layers.
   QK-Norm is optional and disabled in the first baseline. LayerNorm and GeGLU
   remain replaceable alternatives.
-- Use GQA with a configurable `num_kv_heads` and PyTorch
-  `torch.nn.functional.scaled_dot_product_attention` as the default attention
-  path. Keep a simple attention implementation available for learning and
-  correctness tests. PyTorch may select different SDPA backends depending on
-  device, dtype, and input shape; FlashAttention is not assumed to be available
-  for every run.
+- Use GQA with a configurable `num_kv_heads` as the initial attention
+  implementation. The first model uses **causal full attention**: each token
+  can attend to all earlier tokens in the configured context.
+- Keep attention implementation, visibility pattern, and execution backend as
+  separate settings. The model config selects the implementation and pattern;
+  a runtime setting controls SDPA backend preference. The initial runtime
+  backend is `auto`, allowing PyTorch to choose a compatible implementation.
+  Do not assume that `scaled_dot_product_attention` always selects
+  FlashAttention; backend availability depends on device, dtype, and shape.
+- Use one default attention pattern for all layers and optional per-layer
+  pattern overrides for a future hybrid model. Sliding-window attention
+  requires a positive window size and an implementation that applies the
+  corresponding mask or sparse attention path; it is not enabled by changing
+  configuration alone. Full attention has quadratic compute in sequence
+  length even when a fused backend avoids materializing the full attention
+  matrix.
+- Keep the Transformer block dependent on a small sequence-mixer interface,
+  rather than on GQA internals. This provides a boundary for later attention
+  variants or sequence mixers such as SSMs without requiring those variants in
+  the first implementation. Cache state and mask behavior must remain explicit
+  in that interface.
+- Keep a simple attention implementation available for learning and
+  correctness tests.
 - Use a documented, depth-aware residual initialization compatible with the
   chosen pre-norm architecture. Keep initialization in a dedicated module.
   μP is a separate research path, not a promised migration: its
