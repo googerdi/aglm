@@ -1,7 +1,6 @@
 profile: small
 
 model:
-  vocab_size: 24576
   context_length: 2048
   d_model: 768
   num_layers: 12
