@@ -1,0 +1,20 @@
+profile: tiny
+
+model:
+  vocab_size: 8192
+  context_length: 512
+  d_model: 384
+  num_layers: 10
+  num_heads: 6
+
+tokenizer:
+  type: byte_level_bpe
+  vocab_size: 8192
+
+training:
+  precision: fp32
+  gradient_accumulation_steps: 1
+  activation_checkpointing: false
+
+hardware:
+  target: cpu_or_laptop

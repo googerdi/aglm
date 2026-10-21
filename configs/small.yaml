@@ -1,0 +1,20 @@
+profile: small
+
+model:
+  vocab_size: 24576
+  context_length: 2048
+  d_model: 768
+  num_layers: 12
+  num_heads: 12
+
+tokenizer:
+  type: byte_level_bpe
+  vocab_size: 24576
+
+training:
+  precision: bf16
+  gradient_accumulation_steps: 8
+  activation_checkpointing: true
+
+hardware:
+  target: single_consumer_gpu

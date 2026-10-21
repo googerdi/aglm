@@ -1,0 +1,20 @@
+profile: base
+
+model:
+  vocab_size: 65536
+  context_length: 8192
+  d_model: 1536
+  num_layers: 24
+  num_heads: 24
+
+tokenizer:
+  type: byte_level_bpe
+  vocab_size: 65536
+
+training:
+  precision: bf16
+  gradient_accumulation_steps: 16
+  activation_checkpointing: true
+
+hardware:
+  target: high_memory_gpu
