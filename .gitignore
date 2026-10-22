@@ -103,3 +103,5 @@ checkpoints/*
 
 *.pt
 *.pth
+
+graphify-out/*
